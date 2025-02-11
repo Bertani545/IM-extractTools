@@ -1,5 +1,5 @@
 # Run with vgmstream-cli and DATA2.DAT in the same folder
-# Use the command 'python3 extarctAudio.py' to run it and wait for it to finish
+# Use the command 'python3 extarctAudio_LinuxVer.py' to run it and wait for it to finish
 # Will create a folder for each character and extract the files to them
 
 from pathlib import Path
