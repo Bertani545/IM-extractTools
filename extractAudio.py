@@ -128,11 +128,6 @@ with open("DATA2.DAT", "rb") as voicesFile:
 			else:
 				break;
 		audioFile = audioFile[:-totalZeroes]
-		# Debug
-		if totalZeroes not in differentValues:
-			differentValues.append(totalZeroes);
-			with open(Path("different.txt"), "a") as f:
-				f.write(fileName + "\n");
 
 		# Save the raw data for conversion
 		with open(Path("temp"), "wb") as f:
