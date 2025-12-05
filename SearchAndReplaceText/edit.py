@@ -103,15 +103,15 @@ def saveJSON(file, newText, oldText, text_data):
 		data = json.load(file)
 	except json.JSONDecodeError:
 		data = {}
-
-	if offset not in data:
-		data[offset] = {
+	print(str(offset))
+	if str(offset) not in data:
+		data[str(offset)] = {
 			"size": n_bytes,
 			"original": oldText.get("1.0", "end-1c")
 		}
 	for key in keys:
 		text = newText[key].get("1.0", "end-1c")
-		data[offset][key] = text
+		data[str(offset)][key] = text
 
 	file.seek(0)
 	file.truncate()
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
 	slps_path = sys.argv[1] #Path to SLPS_255.47 to modify
 	json_path = sys.argv[2]
-	with open(slps_path, "r+b") as slps, open(json_path, 'w+') as output:
+	with open(slps_path, "r+b") as slps, open(json_path, 'a+', encoding="utf8") as output:
 		root = tk.Tk()
 
 		root.title("Modify text in the game")
