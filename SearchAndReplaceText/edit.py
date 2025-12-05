@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 import sys
 import re
+import json
 
 
 letters = {
@@ -56,12 +57,12 @@ def getTextSize(text):
 	return(len(formated))
 
 
-def on_modified(event, newText, sizeLimit, data):
-    text = newText.get("1.0", "end-1c")
+def on_modified(event, ver, newText, sizeLimit, data):
+    text = newText[ver].get("1.0", "end-1c")
     total = getTextSize(text)
-    data['current_size'] = total
-    sizeLimit.config(text=f"{data['current_size']}/{data['size']}")
-    newText.edit_modified(False)
+    data['current_size'][ver] = total
+    sizeLimit[ver].config(text=f"{data['current_size'][ver]}/{data['size']}")
+    newText[ver].edit_modified(False)
 
 #28 letter per line
 
@@ -73,14 +74,52 @@ def checkLines(text):
 			return False
 	return True
 
-def ovewrite(file, newText, text_data):
+'''
+offset {
+	'size': n
+	'original': ~~ 
+	'key1': ~~
+	'key2': ~~
+}
+'''
+#file is an open json file
+def saveJSON(file, newText, oldText, text_data):
 	offset = text_data['offset']
 	n_bytes = text_data['size']
-	text = newText.get("1.0", "end-1c")
-	if not checkLines(text):
-		print("A line is not the desired length")
-		return 
+	keys = newText.keys()
 
+	for key in keys:
+		text = newText[key].get("1.0", "end-1c")
+		if not checkLines(text):
+			print(f"A line is not the desired length in {key}")
+			return 
+		formated = format(text)
+		pad_len = n_bytes - len(formated)
+		if (pad_len < 0):
+			print('Too Big! Cannot save that')
+			return
+	file.seek(0)
+	try:
+		data = json.load(file)
+	except json.JSONDecodeError:
+		data = {}
+
+	if offset not in data:
+		data[offset] = {
+			"size": n_bytes,
+			"original": oldText.get("1.0", "end-1c")
+		}
+	for key in keys:
+		text = newText[key].get("1.0", "end-1c")
+		data[offset][key] = text
+
+	file.seek(0)
+	file.truncate()
+	json.dump(data, file, ensure_ascii=False, indent=4)
+
+	file.flush()
+
+	'''
 	file.seek(offset)
 	formated = format(text)
 
@@ -91,7 +130,7 @@ def ovewrite(file, newText, text_data):
 
 	file.write(formated + b"\x20" * pad_len)
 	file.flush()
-
+	'''
 
 def clicked(file, tkinterStuff, text_data):
 
@@ -124,17 +163,21 @@ def clicked(file, tkinterStuff, text_data):
 
 		textToMod.insert("1.0", decoded_text)
 		textToMod.grid()
-		newText.grid()
+		for _, nt in newText.items():
+			nt.grid()
 		saveButton.grid()
 
 		text_data['size'] = n_bytes
 		text_data['offset'] = pos
-		text_data['current_size'] = 0
-		sizeLimit.config(text=f"0/{n_bytes}")
+		text_data['current_size']['en'] = 0
+		text_data['current_size']['es'] = 0
+		for _, lim in sizeLimit.items():
+			lim.config(text=f"0/{n_bytes}")
 	else:
 		res = "Try again"
 		textToMod.grid_remove()
-		newText.grid_remove()
+		for nt in newText:
+			nt.grid_remove()
 		saveButton.grid_remove()
 
 	textToMod.config(state="disabled")
@@ -144,11 +187,12 @@ def clicked(file, tkinterStuff, text_data):
 if __name__ == '__main__':
 
 	slps_path = sys.argv[1] #Path to SLPS_255.47 to modify
-	with open(slps_path, "r+b") as slps:
+	json_path = sys.argv[2]
+	with open(slps_path, "r+b") as slps, open(json_path, 'w+') as output:
 		root = tk.Tk()
 
 		root.title("Modify text in the game")
-		root.geometry('1500x800')
+		root.geometry('1800x800')
 
 		lbl = tk.Label(root, text = "Input text to find")
 		lbl.grid(column=0, row=0)
@@ -167,32 +211,48 @@ if __name__ == '__main__':
 
 		# ---- Output
 
-		sizeLimit = tk.Label(root, text = "Total: 0/0")
-		sizeLimit.grid(column=2, row = 3)
+		sizeLimitEn = tk.Label(root, text = "Total: 0/0")
+		sizeLimitEn.grid(column=1, row = 5)
+		sizeLimitEs = tk.Label(root, text = "Total: 0/0")
+		sizeLimitEs.grid(column=2, row = 5)
+		sizeLimit = {}
+		sizeLimit['en'] = sizeLimitEn
+		sizeLimit['es'] = sizeLimitEs
 
-		lbl2 = tk.Label(root, text = "Write new stuff")
+		lbl2 = tk.Label(root, text = "English Version")
 		lbl2.grid(column=1, row=3)
+		lbl3 = tk.Label(root, text = "Spanish Version")
+		lbl3.grid(column=2, row=3)
 
-		newText = tk.Text(root, width=50, height=25)
-		newText.config(state="normal")
-		newText.grid(column=1, row=4)
+		newTextEn = tk.Text(root, width=50, height=25)
+		newTextEn.config(state="normal")
+		newTextEn.grid(column=1, row=4)
+
+		newTextEs = tk.Text(root, width=50, height=25)
+		newTextEs.config(state="normal")
+		newTextEs.grid(column=2, row=4)
+
+		newText = {}
+		newText['en'] = newTextEn
+		newText['es'] = newTextEs
 		
-		
-		saveButton = tk.Button(root, text = "Save to file" ,
-								fg = "red", command=lambda:ovewrite(slps, newText, data))
-		saveButton.grid(column=1, row=5)
+		saveButton = tk.Button(root, text = "Save to JSON" ,
+								fg = "red", command=lambda:saveJSON(output, newText, textToMod, data))
+		saveButton.grid(column=1, row=6)
 
 		toBeMod = {'inputText':iptText, 'offset':offsetlbl, 
 					'allText':textToMod, 'newText': newText, 
 					'saveButton': saveButton, 'limit': sizeLimit}
 		
 		# To update while we write
-		data = {'size': 0, 'offset': 0, 'current_size': 0}
-		newText.bind("<<Modified>>", lambda event: on_modified(event, newText, sizeLimit, data))
+		data = {'size': 0, 'offset': 0, 'current_size': {'es':0, 'en':0}}
+		newTextEn.bind("<<Modified>>", lambda event: on_modified(event, 'en', newText, sizeLimit, data))
+		newTextEs.bind("<<Modified>>", lambda event: on_modified(event, 'es', newText, sizeLimit, data))
 
 
 		textToMod.grid_remove()
-		newText.grid_remove()
+		newText['en'].grid_remove()
+		newText['es'].grid_remove()
 		saveButton.grid_remove()
 		btn = tk.Button(root, text = "Find first occur" ,
 		             fg = "red", command=lambda:clicked(slps, toBeMod, data))
