@@ -20,7 +20,8 @@ letters = {
 	'R': b'\x4b\x04\x18',
 	'S': b'\x4b\x04\x19',
 	'T': b'\x4b\x04\x1a',
-	'W': b'\x4b\x04\x1d'
+	'W': b'\x4b\x04\x1d',
+	'ñ': b'#'
 }
 
 
