@@ -4,6 +4,10 @@ import sys
 import re
 import json
 
+# For 2 languages at the same time
+languages = {'en', 'es'}
+FullLangName = {'en': 'English Version', 'es': 'Versión en Español'}
+
 
 letters = {
 	'B': b'\x4b\x04\x08',
@@ -21,7 +25,19 @@ letters = {
 	'S': b'\x4b\x04\x19',
 	'T': b'\x4b\x04\x1a',
 	'W': b'\x4b\x04\x1d',
-	'ñ': b'#'
+	'ñ': b'#',
+	'á': b'a', # These characters are not in the font, so we default them
+	'é': b'e',
+	'í': b'i',
+	'ó': b'o',
+	'ú': b'u',
+	'Á': b'A',
+	'É': b'E',
+	'Í': b'\x4b\x04\x0f',
+	'Ó': b'\x4b\x04\x15',
+	'Ú': b'U',
+	'¿': b'',
+	'¡': b''
 }
 
 
@@ -104,7 +120,6 @@ def saveJSON(file, newText, oldText, text_data):
 		data = json.load(file)
 	except json.JSONDecodeError:
 		data = {}
-	print(str(offset))
 	if str(offset) not in data:
 		data[str(offset)] = {
 			"size": n_bytes,
@@ -119,7 +134,7 @@ def saveJSON(file, newText, oldText, text_data):
 	json.dump(data, file, ensure_ascii=False, indent=4)
 
 	file.flush()
-
+	print("Saved!")
 	'''
 	file.seek(offset)
 	formated = format(text)
@@ -133,132 +148,195 @@ def saveJSON(file, newText, oldText, text_data):
 	file.flush()
 	'''
 
-def clicked(file, tkinterStuff, text_data):
-
-	inputText = tkinterStuff['inputText']
+def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset):
 	offsetlbl = tkinterStuff['offset']
 	textToMod = tkinterStuff['allText']
 	newText = tkinterStuff['newText']
 	saveButton = tkinterStuff['saveButton']
 	sizeLimit = tkinterStuff['limit']
 
-	text = inputText.get("1.0", "end-1c") #Removes last \n
-	encoded = text.encode("shift_jis")
-	data = file.read()
-	pos = data.find(encoded)
-
 	textToMod.config(state="normal")
 	textToMod.delete("1.0", "end") 
-	if pos != -1:
-		res = f"Found at offset {pos:#x}"
-		file.seek(pos)
-		byte_data = []
-		while True:
-		    byte = file.read(1)
-		    if not byte or byte == b'\x00':  # Stop if we hit the null byte or end of file
-		        break
-		    byte_data.append(byte)
-		n_bytes = len(byte_data)
-		byte_data = b''.join(byte_data)
-		decoded_text = byte_data.decode('shift_jis')
 
-		textToMod.insert("1.0", decoded_text)
-		textToMod.grid()
-		for _, nt in newText.items():
-			nt.grid()
-		saveButton.grid()
+	res = f"Found at offset {offset:#x}"
+	binaryFile.seek(offset)
+	byte_data = []
+	while True:
+	    byte = binaryFile.read(1)
+	    if not byte or byte == b'\x00':  # Stop if we hit the null byte or end of file
+	        break
+	    byte_data.append(byte)
+	n_bytes = len(byte_data)
+	byte_data = b''.join(byte_data)
+	decoded_text = byte_data.decode('shift_jis')
 
-		text_data['size'] = n_bytes
-		text_data['offset'] = pos
-		text_data['current_size']['en'] = 0
-		text_data['current_size']['es'] = 0
+	textToMod.insert("1.0", decoded_text)
+	textToMod.grid()
+	for _, nt in newText.items():
+		# TODO: Clean it or search in the json fot the last one
+		nt.delete('1.0', tk.END)
+		nt.grid()
+	saveButton.grid()
+
+	text_data['size'] = n_bytes
+	text_data['offset'] = offset
+
+	# Write if old data is found
+	key = str(offset)
+	jsonFile.seek(0)
+	try:
+		jsonData = json.load(jsonFile)
+	except json.JSONDecodeError:
+		jsonData = {}
+	if key in jsonData:
+		for lang in languages:
+			text = jsonData[key][lang]
+			newText[lang].insert("1.0", text)
+			text_data['current_size'][lang] = getTextSize(text)
+	else:
+		for lang in languages:
+			text_data['current_size'][lang] = 0
 		for _, lim in sizeLimit.items():
 			lim.config(text=f"0/{n_bytes}")
-	else:
-		res = "Try again"
-		textToMod.grid_remove()
-		for nt in newText:
-			nt.grid_remove()
-		saveButton.grid_remove()
+	return res
 
-	textToMod.config(state="disabled")
-	offsetlbl.configure(text = res)
-	file.seek(0)
+def closeGUI(tkinterStuff, text_data):
+	offsetlbl = tkinterStuff['offset']
+	textToMod = tkinterStuff['allText']
+	newText = tkinterStuff['newText']
+	saveButton = tkinterStuff['saveButton']
+	sizeLimit = tkinterStuff['limit']
+
+	textToMod.delete('1.0', tk.END)
+	for nt in newText:
+		nt.delete('1.0', tk.END)
+	saveButton.grid_remove()
+	text_data['size'] = 0
+	text_data['offset'] = 0
+	for lang in languages:
+			text_data['current_size'][lang] = 0
+	return "Try Again"
+
+def startNewTranslationOffset(binaryFile, jsonFile, tkinterStuff, text_data):
+	offset = tkinterStuff['inputOffset'].get("1.0", "end-1c")
+	pos = 0
+	try:
+		pos = int(offset)
+	except:
+		pos = -1
+	if offset == "" or pos == -1:
+		return
+
+	if pos != -1:
+		res = finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, pos)
+	else:
+		res = closeGUI(tkinterStuff, text_data)
+
+	tkinterStuff['offset'].configure(text = res)
+	tkinterStuff['allText'].config(state="disabled")
+	binaryFile.seek(0)
+
+def startNewTranslationText(binaryFile, jsonFile, tkinterStuff, text_data):
+
+	inputText = tkinterStuff['inputText']
+	text = inputText.get("1.0", "end-1c") #Removes last \n
+	if text == "":
+		return 
+	encoded = text.encode("shift_jis")
+	data = binaryFile.read()
+	pos = data.find(encoded)
+
+	if pos != -1:
+		res = finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, pos)
+	else:
+		res = closeGUI(tkinterStuff, text_data)
+
+	tkinterStuff['offset'].configure(text = res)
+	tkinterStuff['allText'].config(state="disabled")
+	binaryFile.seek(0)
 
 if __name__ == '__main__':
 
-	slps_path = sys.argv[1] #Path to SLPS_255.47 to modify
+	binary_path = sys.argv[1] #Path to SLPS_255.47 to modify
 	json_path = sys.argv[2]
-	with open(slps_path, "r+b") as slps, open(json_path, 'a+', encoding="utf8") as output:
+	with open(binary_path, "r+b") as binaryFile, open(json_path, 'a+', encoding="utf8") as jsonFile:
 		root = tk.Tk()
 
 		root.title("Modify text in the game")
 		root.geometry('1800x800')
 
+		# Search stuff
 		lbl = tk.Label(root, text = "Input text to find")
 		lbl.grid(column=0, row=0)
-
 
 		iptText = tk.Text(root, width=50, height=5)
 		iptText.config(state="normal")
 		iptText.grid(column=0, row=1)
 
+
+		lblOffsetIn = tk.Label(root, text = "Input offset to follow")
+		lblOffsetIn.grid(column = 1, row = 0)
+		iptOffset = tk.Text(root, width=50, height=1)
+		iptOffset.config(state="normal")
+		iptOffset.grid(column=1, row=1)
+
+
+		# Info
 		offsetlbl = tk.Label(root, text = "")
 		offsetlbl.grid(column=0, row=3)
 
+		# ----
 		textToMod = tk.Text(root)
 		textToMod.grid(column=0, row=4)
 		textToMod.config(state="disabled")
 
 		# ---- Output
-
-		sizeLimitEn = tk.Label(root, text = "Total: 0/0")
-		sizeLimitEn.grid(column=1, row = 5)
-		sizeLimitEs = tk.Label(root, text = "Total: 0/0")
-		sizeLimitEs.grid(column=2, row = 5)
 		sizeLimit = {}
-		sizeLimit['en'] = sizeLimitEn
-		sizeLimit['es'] = sizeLimitEs
-
-		lbl2 = tk.Label(root, text = "English Version")
-		lbl2.grid(column=1, row=3)
-		lbl3 = tk.Label(root, text = "Spanish Version")
-		lbl3.grid(column=2, row=3)
-
-		newTextEn = tk.Text(root, width=50, height=25)
-		newTextEn.config(state="normal")
-		newTextEn.grid(column=1, row=4)
-
-		newTextEs = tk.Text(root, width=50, height=25)
-		newTextEs.config(state="normal")
-		newTextEs.grid(column=2, row=4)
-
 		newText = {}
-		newText['en'] = newTextEn
-		newText['es'] = newTextEs
+		currCol = 1
+		for lang in languages:
+			sL = tk.Label(root, text = "Total: 0/0")
+			sL.grid(column=currCol, row = 5)
+			sizeLimit[lang] = sL
+
+			label = tk.Label(root, text = FullLangName[lang])
+			label.grid(column=currCol, row=3)
+			
+			nT = tk.Text(root, width=50, height=25)
+			nT.config(state="normal")
+			nT.grid(column=currCol, row=4)
+			newText[lang] = nT
+
+			currCol += 1
 		
+		data = {'size': 0, 'offset': 0, 'current_size': {'es':0, 'en':0}}
+
 		saveButton = tk.Button(root, text = "Save to JSON" ,
-								fg = "red", command=lambda:saveJSON(output, newText, textToMod, data))
+								fg = "red", command=lambda:saveJSON(jsonFile, newText, textToMod, data))
 		saveButton.grid(column=1, row=6)
 
-		toBeMod = {'inputText':iptText, 'offset':offsetlbl, 
-					'allText':textToMod, 'newText': newText, 
+		toBeMod = {'inputText':iptText, 'inputOffset':iptOffset,
+					'offset':offsetlbl,  'allText':textToMod, 'newText': newText, 
 					'saveButton': saveButton, 'limit': sizeLimit}
 		
 		# To update while we write
-		data = {'size': 0, 'offset': 0, 'current_size': {'es':0, 'en':0}}
-		newTextEn.bind("<<Modified>>", lambda event: on_modified(event, 'en', newText, sizeLimit, data))
-		newTextEs.bind("<<Modified>>", lambda event: on_modified(event, 'es', newText, sizeLimit, data))
-
+		
+		for lang in languages:
+			nT = newText[lang]
+			# We have to pass the value to the lambda fucntion
+			nT.bind("<<Modified>>", lambda event, lang=lang: on_modified(event, lang, newText, sizeLimit, data))
+			nT.grid_remove()
 
 		textToMod.grid_remove()
-		newText['en'].grid_remove()
-		newText['es'].grid_remove()
 		saveButton.grid_remove()
-		btn = tk.Button(root, text = "Find first occur" ,
-		             fg = "red", command=lambda:clicked(slps, toBeMod, data))
+		searchBtnText = tk.Button(root, text = "Find first occur" ,
+		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data))
+		searchBtnOffset = tk.Button(root, text = "Go to Offset" ,
+		             fg = "red", command=lambda:startNewTranslationOffset(binaryFile, jsonFile, toBeMod, data))
+
 		# set Button grid
-		btn.grid(column=0, row=2)
+		searchBtnText.grid(column=0, row=2)
+		searchBtnOffset.grid(column=1, row=2)
 
 		tk.Label(root, text = "Remeber that th line limit is 28 chars").grid(column=1, row=7)
 
