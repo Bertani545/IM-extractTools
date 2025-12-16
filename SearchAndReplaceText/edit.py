@@ -3,42 +3,12 @@ from tkinter import filedialog
 import sys
 import re
 import json
+from letters_mapping import letters
 
-# For 2 languages at the same time
+
+# For any number of languages
 languages = {'en', 'es'}
 FullLangName = {'en': 'English Version', 'es': 'Versión en Español'}
-
-
-letters = {
-	'B': b'\x4b\x04\x08',
-	'C': b'\x4b\x04\x09',
-	'D': b'\x4b\x04\x0a',
-	'F': b'\x4b\x04\x0c',
-	'G': b'\x4b\x04\x0d',
-	'I': b'\x4b\x04\x0f',
-	'J': b'\x4b\x04\x10',
-	'K': b'\x4b\x04\x11',
-	'O': b'\x4b\x04\x15',
-	'P': b'\x4b\x04\x16',
-	'Q': b'\x4b\x04\x17',
-	'R': b'\x4b\x04\x18',
-	'S': b'\x4b\x04\x19',
-	'T': b'\x4b\x04\x1a',
-	'W': b'\x4b\x04\x1d',
-	'ñ': b'#',
-	'á': b'a', # These characters are not in the font, so we default them
-	'é': b'e',
-	'í': b'i',
-	'ó': b'o',
-	'ú': b'u',
-	'Á': b'A',
-	'É': b'E',
-	'Í': b'\x4b\x04\x0f',
-	'Ó': b'\x4b\x04\x15',
-	'Ú': b'U',
-	'¿': b'',
-	'¡': b''
-}
 
 
 def get_char_size(ch):
@@ -190,7 +160,10 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 		jsonData = {}
 	if key in jsonData:
 		for lang in languages:
-			text = jsonData[key][lang]
+			try:
+				text = jsonData[key][lang]
+			except:
+				text = ""
 			newText[lang].insert("1.0", text)
 			text_data['current_size'][lang] = getTextSize(text)
 	else:
@@ -207,8 +180,9 @@ def closeGUI(tkinterStuff, text_data):
 	saveButton = tkinterStuff['saveButton']
 	sizeLimit = tkinterStuff['limit']
 
+	textToMod.config(state="normal")
 	textToMod.delete('1.0', tk.END)
-	for nt in newText:
+	for _, nt in newText.items():
 		nt.delete('1.0', tk.END)
 	saveButton.grid_remove()
 	text_data['size'] = 0
@@ -227,7 +201,7 @@ def startNewTranslationOffset(binaryFile, jsonFile, tkinterStuff, text_data):
 	if offset == "" or pos == -1:
 		return
 
-	if pos != -1:
+	if pos >= 0:
 		res = finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, pos)
 	else:
 		res = closeGUI(tkinterStuff, text_data)
@@ -246,7 +220,7 @@ def startNewTranslationText(binaryFile, jsonFile, tkinterStuff, text_data):
 	data = binaryFile.read()
 	pos = data.find(encoded)
 
-	if pos != -1:
+	if pos >= 0:
 		res = finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, pos)
 	else:
 		res = closeGUI(tkinterStuff, text_data)
@@ -299,7 +273,10 @@ if __name__ == '__main__':
 			sL.grid(column=currCol, row = 5)
 			sizeLimit[lang] = sL
 
-			label = tk.Label(root, text = FullLangName[lang])
+			try:
+				label = tk.Label(root, text = FullLangName[lang])
+			except:
+				label = tk.Label(root, text = "I'm a default text")
 			label.grid(column=currCol, row=3)
 			
 			nT = tk.Text(root, width=50, height=25)

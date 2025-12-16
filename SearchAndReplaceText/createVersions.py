@@ -3,25 +3,7 @@ import re
 import json
 import os
 import shutil
-
-letters = {
-	'B': b'\x4b\x04\x08',
-	'C': b'\x4b\x04\x09',
-	'D': b'\x4b\x04\x0a',
-	'F': b'\x4b\x04\x0c',
-	'G': b'\x4b\x04\x0d',
-	'I': b'\x4b\x04\x0f',
-	'J': b'\x4b\x04\x10',
-	'K': b'\x4b\x04\x11',
-	'O': b'\x4b\x04\x15',
-	'P': b'\x4b\x04\x16',
-	'Q': b'\x4b\x04\x17',
-	'R': b'\x4b\x04\x18',
-	'S': b'\x4b\x04\x19',
-	'T': b'\x4b\x04\x1a',
-	'W': b'\x4b\x04\x1d',
-	'ñ': b'#'
-}
+from letters_mapping import letters
 
 def get_char_size(ch):
     """Return byte length based on custom letters map or shift_jis encoding."""
