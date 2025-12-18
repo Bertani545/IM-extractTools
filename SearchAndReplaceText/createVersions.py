@@ -3,39 +3,8 @@ import re
 import json
 import os
 import shutil
-from letters_mapping import letters
+import format_utils as FU
 
-def get_char_size(ch):
-    """Return byte length based on custom letters map or shift_jis encoding."""
-    if ch in letters:
-        return len(letters[ch])
-    else:
-        return len(ch.encode("shift_jis", errors="replace"))
-
-
-def format(text):
-	out = bytearray()
-	i = 0
-	length = len(text)
-	while i < length:
-		ch = text[i]
-		if i+2 < length and text[i:i+2] == "0x":
-			flag_char = text[i+2]
-			out += flag_char.encode("shift_jis", errors="replace")
-			i += 3
-			continue
-		if ch in letters:
-			out += letters[ch]
-			i += 1
-			continue
-
-		out += ch.encode("shift_jis", errors="replace")
-		i += 1
-	return bytes(out)
-
-def getTextSize(text):
-	formated = format(text)
-	return(len(formated))
 
 
 def createNewFiles(json_data, exec_path):
@@ -54,7 +23,7 @@ def createNewFiles(json_data, exec_path):
 		n_bytes = entry["size"]
 		for key in variant_keys:
 			text = entry[key]
-			formated = format(text)
+			formated = FU.formatText(text)
 			
 			pad_len = n_bytes - len(formated)
 			if (pad_len < 0):

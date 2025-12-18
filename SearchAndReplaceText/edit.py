@@ -3,7 +3,7 @@ from tkinter import filedialog
 import sys
 import re
 import json
-from letters_mapping import letters
+import format_utils as FU
 
 
 # For any number of languages
@@ -11,42 +11,10 @@ languages = {'en', 'es'}
 FullLangName = {'en': 'English Version', 'es': 'Versión en Español'}
 
 
-def get_char_size(ch):
-    """Return byte length based on custom letters map or shift_jis encoding."""
-    if ch in letters:
-        return len(letters[ch])
-    else:
-        return len(ch.encode("shift_jis", errors="replace"))
-
-
-def format(text):
-	out = bytearray()
-	i = 0
-	length = len(text)
-	while i < length:
-		ch = text[i]
-		if i+2 < length and text[i:i+2] == "0x":
-			flag_char = text[i+2]
-			out += flag_char.encode("shift_jis", errors="replace")
-			i += 3
-			continue
-		if ch in letters:
-			out += letters[ch]
-			i += 1
-			continue
-
-		out += ch.encode("shift_jis", errors="replace")
-		i += 1
-	return bytes(out)
-
-def getTextSize(text):
-	formated = format(text)
-	return(len(formated))
-
 
 def on_modified(event, ver, newText, sizeLimit, data):
     text = newText[ver].get("1.0", "end-1c")
-    total = getTextSize(text)
+    total = FU.getTextSize(text)
     data['current_size'][ver] = total
     sizeLimit[ver].config(text=f"{data['current_size'][ver]}/{data['size']}")
     newText[ver].edit_modified(False)
@@ -80,7 +48,7 @@ def saveJSON(file, newText, oldText, text_data):
 		if not checkLines(text):
 			print(f"A line is not the desired length in {key}")
 			return 
-		formated = format(text)
+		formated = FU.formatText(text)
 		pad_len = n_bytes - len(formated)
 		if (pad_len < 0):
 			print('Too Big! Cannot save that')
@@ -107,7 +75,7 @@ def saveJSON(file, newText, oldText, text_data):
 	print("Saved!")
 	'''
 	file.seek(offset)
-	formated = format(text)
+	formated = FU.formatText(text)
 
 	pad_len = n_bytes - len(formated)
 	if (pad_len < 0):
@@ -165,7 +133,7 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 			except:
 				text = ""
 			newText[lang].insert("1.0", text)
-			text_data['current_size'][lang] = getTextSize(text)
+			text_data['current_size'][lang] = FU.getTextSize(text)
 	else:
 		for lang in languages:
 			text_data['current_size'][lang] = 0
