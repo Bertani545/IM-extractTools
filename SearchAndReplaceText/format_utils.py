@@ -2,9 +2,9 @@
 # Change this map to your language necessities
 letters = {
 	# Neccesary ones
-	'C': b'\x4b\x04\x09',
-	'I': b'\x4b\x04\x0f',
-	'W': b'\x4b\x04\x1d',
+	'C': b'\xA6\x04\x09',
+	'I': b'\xA6\x04\x0f',
+	'W': b'\xA6\x04\x1d',
 
 	'ñ': b'#', # Modified in the font # -> ñ
 
@@ -34,9 +34,9 @@ def formatText(text):
 		if i+4 <= length and text[i:i+2] == "0x": #hex flag
 			flag = text[i:i+4]
 			try:
-				hex_val = int(text[i+2:i+4], 16)
+				hex_val = int(flag, 16)
 			except:
-				hex_val = b'\x00'
+				hex_val = 0
 			out.append(hex_val)
 			i += 4
 			continue
