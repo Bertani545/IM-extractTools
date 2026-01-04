@@ -1,6 +1,18 @@
+import re
 # This is specific for the PS2 game Ichigo Mashimaro
-# Change this map to your language necessities
-letters = {
+# Change the initial data for your game
+
+encoding = "shift_jis"
+
+# Map of characters that the game uses
+letters_map = {
+	'a': b'a',
+	"あ": b'\x82\xa0',
+	"お": b'\x82\xa8',
+}
+
+# Map of characters for the new version that you are creating
+output_letters = {
 	# Neccesary ones
 	'C': b'\xA6\x04\x09',
 	'I': b'\xA6\x04\x0f',
@@ -23,6 +35,42 @@ letters = {
 	'¡': b''
 }
 
+LINE_SIZE = 28
+
+def prepareTextForSearch(text):
+	encoded = bytearray(text.encode(encoding))
+	for chara, replacement in letters_map.items():
+		target = chara.encode(encoding)
+
+		start = 0
+		while True:
+			pos = encoded.find(target, start)
+			if pos == -1:
+				break
+			encoded[pos:pos + len(target)] = replacement
+			start = pos + len(replacement)
+	return bytes(encoded)
+
+# To UTF-8
+def decodeGameText(byte_array):
+	data = bytearray(byte_array)
+	for chara, game_bytes in letters_map.items():
+		utf8_bytes = chara.encode(encoding)
+
+		start = 0
+		while True:
+			pos = data.find(game_bytes, start)
+			if pos == -1:
+				break
+
+			data[pos:pos + len(game_bytes)] = utf8_bytes
+			start = pos + len(utf8_bytes)
+	return data.decode(encoding, errors="strict")
+
+
+
+
+
 #Example
 # 0xA1This is light blue
 def formatText(text):
@@ -40,24 +88,32 @@ def formatText(text):
 			out.append(hex_val)
 			i += 4
 			continue
-		if ch in letters:
-			out += letters[ch]
+		if ch in output_letters:
+			out += output_letters[ch]
 		else:
-			out += ch.encode("shift_jis", errors="replace")
+			out += ch.encode(encoding, errors="replace")
 			
 		i += 1
 
 	return bytes(out)
 
 def getCharSize(ch):
-    """Return byte length based on custom letters map or shift_jis encoding."""
-    if ch in letters:
-        return len(letters[ch])
+    """Return byte length based on custom letters map or encoding."""
+    if ch in output_letters:
+        return len(output_letters[ch])
     else:
-        return len(ch.encode("shift_jis", errors="replace"))
+        return len(ch.encode(encoding, errors="replace"))
 
 
 
 def getTextSize(text):
 	formated = formatText(text)
 	return(len(formated))
+
+def checkLines(text):
+	lines = text.split('\n')
+	for i, line in enumerate(lines):
+		clean = re.sub(r"0x.", "", line)
+		if len(clean) > LINE_SIZE:
+			return i
+	return -1

@@ -24,13 +24,7 @@ def on_modified(event, ver, newText, sizeLimit, data):
 
 #28 letter per line
 
-def checkLines(text):
-	lines = text.split('\n')
-	for line in lines:
-		clean = re.sub(r"0x.", "", line)
-		if len(clean) > 28:
-			return False
-	return True
+
 
 '''
 offset {
@@ -48,13 +42,14 @@ def saveJSON(file, newText, oldText, text_data):
 
 	for key in keys:
 		text = newText[key].get("1.0", "end-1c")
-		if not checkLines(text):
-			print(f"A line is not the desired length in {key}")
+		line_result = FU.checkLines(text)
+		if (line_result != -1):
+			tk.messagebox.showinfo("Warning", f"Line {line_result + 1} is bigger than the limit {FU.LINE_SIZE} characters")
 			return 
 		formated = FU.formatText(text)
 		pad_len = n_bytes - len(formated)
 		if (pad_len < 0):
-			print('Too Big! Cannot save that')
+			tk.messagebox.showinfo("Warning", 'Too Big! Cannot save that')
 			return
 	file.seek(0)
 	try:
@@ -75,7 +70,7 @@ def saveJSON(file, newText, oldText, text_data):
 	json.dump(data, file, ensure_ascii=False, indent=4)
 
 	file.flush()
-	print("Saved!")
+	tk.messagebox.showinfo("Info", 'Saved! :)')
 	'''
 	file.seek(offset)
 	formated = FU.formatText(text)
@@ -101,15 +96,16 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 
 	res = f"Found at offset {offset:#x}"
 	binaryFile.seek(offset)
-	byte_data = []
+	byte_data = bytearray()
 	while True:
 	    byte = binaryFile.read(1)
 	    if not byte or byte == b'\x00':  # Stop if we hit the null byte or end of file
 	        break
-	    byte_data.append(byte)
+	    byte_data += byte
 	n_bytes = len(byte_data)
-	byte_data = b''.join(byte_data)
-	decoded_text = byte_data.decode('shift_jis')
+	decoded_text = FU.decodeGameText(byte_data)
+	#byte_data = b''.join(byte_data)
+	#decoded_text = byte_data.decode(FU.encoding)
 
 	textToMod.insert("1.0", decoded_text)
 	textToMod.grid()
@@ -193,7 +189,7 @@ def startNewTranslationText(binaryFile, jsonFile, tkinterStuff, text_data):
 	text = inputText.get("1.0", "end-1c") #Removes last \n
 	if text == "":
 		return 
-	encoded = text.encode("shift_jis")
+	encoded = FU.prepareTextForSearch(text)
 	data = binaryFile.read()
 	pos = data.find(encoded)
 
