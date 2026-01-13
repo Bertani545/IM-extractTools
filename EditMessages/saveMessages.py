@@ -76,18 +76,7 @@ def segments_to_row(img, segment_heigth=32):
 	output = np.hstack(segments)
 
 	output = slice_width(output)
-	h,w,c = output.shape
-	alpha = np.full((h,w,1), 0x80, dtype=np.uint8)
-
-	rgba = np.concatenate([output.astype(np.uint8), alpha], axis=2)
-
-
-	#new_img = Image.fromarray(rgba.astype(np.uint8), "RGBA")
-	return rgba
-
-
-	# Finally
-	output = output.reshape(-1, 3)
+	return output
 
 def save_img(img, where_path, offset):
 	with open(where_path, "r+b") as DATA0:		
@@ -112,7 +101,7 @@ if __name__ == '__main__':
 				img_path = os.path.join(lang_dir, f"{int(message_id):02d}.png")
 				if not os.path.isfile(img_path):
 					continue
-				img = Image.open(img_path).convert("RGB")
+				img = Image.open(img_path).convert("RGBA")
 				coded_img = segments_to_row(img)
 				save_img(coded_img, patched_path, offset)
 	
