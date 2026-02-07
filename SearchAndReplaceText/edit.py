@@ -17,12 +17,18 @@ def copy_to_clipboard(text):
 
 def on_modified(event, ver, newText, sizeLimit, data):
     text = newText[ver].get("1.0", "end-1c")
+    edited_text = FU.complyLineSize(text)
+    if edited_text != text:
+        newText[ver].edit_modified(False)
+        newText[ver].delete("1.0", "end")
+        newText[ver].insert("1.0", edited_text)
+        text = edited_text
+
     total = FU.getTextSize(text)
     data['current_size'][ver] = total
     sizeLimit[ver].config(text=f"{data['current_size'][ver]}/{data['size']}")
     newText[ver].edit_modified(False)
 
-#28 letter per line
 
 
 

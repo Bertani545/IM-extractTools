@@ -117,3 +117,14 @@ def checkLines(text):
 		if len(clean) > LINE_SIZE:
 			return i
 	return -1
+
+def complyLineSize(text):
+	mod_line = checkLines(text)
+	while(mod_line != -1):
+		lines = text.split('\n')
+		to_mod = lines[mod_line]
+		lines[mod_line] = to_mod[:LINE_SIZE] + '\n' + to_mod[LINE_SIZE:]
+		text = "".join(lines)
+		mod_line = checkLines(text)
+	return text
+
