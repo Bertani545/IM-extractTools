@@ -10,6 +10,9 @@ import format_utils as FU
 languages = {'en', 'es'}
 FullLangName = {'en': 'English Version', 'es': 'Versión en Español'}
 
+CURRENT_SEARCH = ""
+SEACRH_OFFSET = 0
+
 def copy_to_clipboard(text):
     root.clipboard_clear()
     root.clipboard_append(text)
@@ -88,8 +91,10 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 	textToMod.config(state="normal")
 	textToMod.delete("1.0", "end") 
 
-	binaryFile.seek(offset)
 	byte_data = bytearray()
+
+
+	binaryFile.seek(offset)
 	while True:
 	    byte = binaryFile.read(1)
 	    if not byte or byte == b'\x00':  # Stop if we hit the null byte or end of file
@@ -97,11 +102,6 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 	    byte_data += byte
 	n_bytes = len(byte_data)
 	decoded_text = FU.decodeGameText(byte_data)
-
-	# Case if it is using inital symbol
-	if decoded_text[0] == FU.INITIAL_CHAR:
-		decoded_text = decoded_text[1:]
-		offset += 1
 
 
 	textToMod.insert("1.0", decoded_text)
@@ -111,7 +111,6 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 		nt.delete('1.0', tk.END)
 		nt.grid()
 	saveButton.grid()
-
 	text_data['size'] = n_bytes
 	text_data['offset'] = offset
 	res = f"Found at offset {offset:#x}"
@@ -183,19 +182,38 @@ def startNewTranslationOffset(binaryFile, jsonFile, tkinterStuff, text_data):
 
 
 def startNewTranslationText(binaryFile, jsonFile, tkinterStuff, text_data, start_sym='', end_sym=''):
+	global SEACRH_OFFSET
+	global CURRENT_SEARCH
 
 	inputText = tkinterStuff['inputText']
 	text = inputText.get("1.0", "end-1c") #Removes last \n
+
+	if text != CURRENT_SEARCH:
+		SEACRH_OFFSET = 0
+		CURRENT_SEARCH = ""
+
 	if text == "":
 		return 
 	encoded = FU.prepareTextForSearch(text, start_sym, end_sym)
 	data = binaryFile.read()
-	pos = data.find(encoded)
+
+	pos = data.find(encoded, SEACRH_OFFSET)
 
 	if pos >= 0:
+		SEACRH_OFFSET = pos + 1
+		CURRENT_SEARCH = text
+
+		if start_sym != '':
+			pos += 1 # We don't care about this one
+		if end_sym != '':
+			pos = data.rfind(b']', 0, pos) + 1
+
 		res = finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, pos)
+		
 	else:
+		tk.messagebox.showinfo("Info", 'Restarting')
 		res = closeGUI(tkinterStuff, text_data)
+		SEACRH_OFFSET = 0
 
 	tkinterStuff['offset'].configure(text = res)
 	tkinterStuff['allText'].config(state="disabled")
