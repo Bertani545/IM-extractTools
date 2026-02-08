@@ -3,6 +3,9 @@ import re
 # Change the initial data for your game
 
 encoding = "shift_jis"
+LINE_SIZE = 28
+INITIAL_CHAR = ']'
+END_CHAR = '\0'
 
 # Map of characters that the game uses
 letters_map = {
@@ -35,9 +38,8 @@ output_letters = {
 	'¡': b''
 }
 
-LINE_SIZE = 28
-
-def prepareTextForSearch(text):
+def prepareTextForSearch(text, start, end):
+	text = start + text + end
 	encoded = bytearray(text.encode(encoding))
 	for chara, replacement in letters_map.items():
 		target = chara.encode(encoding)

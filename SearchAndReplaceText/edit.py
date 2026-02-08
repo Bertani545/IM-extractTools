@@ -77,18 +77,6 @@ def saveJSON(file, newText, oldText, text_data):
 
 	file.flush()
 	tk.messagebox.showinfo("Info", 'Saved! :)')
-	'''
-	file.seek(offset)
-	formated = FU.formatText(text)
-
-	pad_len = n_bytes - len(formated)
-	if (pad_len < 0):
-		print('Too Big! Cannot write that')
-		return
-
-	file.write(formated + b"\x20" * pad_len)
-	file.flush()
-	'''
 
 def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset):
 	offsetlbl = tkinterStuff['offset']
@@ -100,7 +88,6 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 	textToMod.config(state="normal")
 	textToMod.delete("1.0", "end") 
 
-	res = f"Found at offset {offset:#x}"
 	binaryFile.seek(offset)
 	byte_data = bytearray()
 	while True:
@@ -110,8 +97,12 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 	    byte_data += byte
 	n_bytes = len(byte_data)
 	decoded_text = FU.decodeGameText(byte_data)
-	#byte_data = b''.join(byte_data)
-	#decoded_text = byte_data.decode(FU.encoding)
+
+	# Case if it is using inital symbol
+	if decoded_text[0] == FU.INITIAL_CHAR:
+		decoded_text = decoded_text[1:]
+		offset += 1
+
 
 	textToMod.insert("1.0", decoded_text)
 	textToMod.grid()
@@ -123,6 +114,7 @@ def finishTranslationSetup(binaryFile, jsonFile, tkinterStuff, text_data, offset
 
 	text_data['size'] = n_bytes
 	text_data['offset'] = offset
+	res = f"Found at offset {offset:#x}"
 
 	# Write if old data is found
 	key = str(offset)
@@ -189,13 +181,14 @@ def startNewTranslationOffset(binaryFile, jsonFile, tkinterStuff, text_data):
 	tkinterStuff['allText'].config(state="disabled")
 	binaryFile.seek(0)
 
-def startNewTranslationText(binaryFile, jsonFile, tkinterStuff, text_data):
+
+def startNewTranslationText(binaryFile, jsonFile, tkinterStuff, text_data, start_sym='', end_sym=''):
 
 	inputText = tkinterStuff['inputText']
 	text = inputText.get("1.0", "end-1c") #Removes last \n
 	if text == "":
 		return 
-	encoded = FU.prepareTextForSearch(text)
+	encoded = FU.prepareTextForSearch(text, start_sym, end_sym)
 	data = binaryFile.read()
 	pos = data.find(encoded)
 
@@ -285,13 +278,30 @@ if __name__ == '__main__':
 
 		textToMod.grid_remove()
 		saveButton.grid_remove()
-		searchBtnText = tk.Button(root, text = "Find first occur" ,
+
+		btn_frame = tk.Frame(root)
+		searchBtnText = tk.Button(btn_frame, text = "Find" ,
 		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data))
+		searchBtnFullText = tk.Button(btn_frame, text = "Find as whole" ,
+		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data, FU.INITIAL_CHAR, FU.END_CHAR))
+		searchBtnStartText = tk.Button(btn_frame, text = "Find as start" ,
+		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data, FU.INITIAL_CHAR))
+		searchBtnEndText = tk.Button(btn_frame, text = "Find as end" ,
+		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data, '', FU.END_CHAR))
+		
+
+
 		searchBtnOffset = tk.Button(root, text = "Go to Offset" ,
 		             fg = "red", command=lambda:startNewTranslationOffset(binaryFile, jsonFile, toBeMod, data))
 
 		# set Button grid
-		searchBtnText.grid(column=0, row=2)
+		#, bg="lightblue", width=200, height=100, bd=3, relief=tk.RIDGE)
+		
+		btn_frame.grid(column=0, row=2)
+		searchBtnText.grid(in_=btn_frame, column=0, row=0)
+		searchBtnFullText.grid(in_=btn_frame, column=1, row=0)
+		searchBtnStartText.grid(in_=btn_frame, column=2, row=0)
+		searchBtnEndText.grid(in_=btn_frame, column=3, row=0)
 		searchBtnOffset.grid(column=1, row=2)
 
 		tk.Label(root,  text = "Remeber that the line limit is 28 chars").grid(column=1, row=7)
