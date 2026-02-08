@@ -126,7 +126,7 @@ def complyLineSize(text):
 		lines = text.split('\n')
 		to_mod = lines[mod_line]
 		lines[mod_line] = to_mod[:LINE_SIZE] + '\n' + to_mod[LINE_SIZE:]
-		text = "".join(lines)
+		text = "\n".join(lines)
 		mod_line = checkLines(text)
 	return text
 
