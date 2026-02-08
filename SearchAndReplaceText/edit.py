@@ -303,7 +303,7 @@ if __name__ == '__main__':
 		searchBtnFullText = tk.Button(btn_frame, text = "Find as whole" ,
 		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data, FU.INITIAL_CHAR, FU.END_CHAR))
 		searchBtnStartText = tk.Button(btn_frame, text = "Find as start" ,
-		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data, FU.INITIAL_CHAR))
+		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data, FU.INITIAL_CHAR, ''))
 		searchBtnEndText = tk.Button(btn_frame, text = "Find as end" ,
 		             fg = "red", command=lambda:startNewTranslationText(binaryFile, jsonFile, toBeMod, data, '', FU.END_CHAR))
 		
@@ -325,7 +325,7 @@ if __name__ == '__main__':
 		tk.Label(root,  text = "Remeber that the line limit is 28 chars").grid(column=1, row=7)
 
 		# Button for ... in a single char
-		btn = tk.Button(root, font=("Arial", 12, "bold"), text="Copy …", command=lambda: copy_to_clipboard("…")).grid(column=3, row=0)
+		btn = tk.Button(root, font=("Arial", 12, "bold"), text="Copy …", command=lambda: copy_to_clipboard("…")).grid(column=2, row=0)
 
 		# Let's add the flags
 		tk.Label(root, justify="left", text = "Flags we may encounter:\nB->0xA1    C->C          D->0xA2\nF->0xA3    G->0xA4    I->I    \nJ->0xA5     K->0xA6    O->0xA7\nP->0xA8    Q->0xA9    R->0xAA\nS->0xAB    T->0xAC    W->W").grid(column=0, row=7)
