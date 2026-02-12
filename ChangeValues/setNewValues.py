@@ -13,10 +13,13 @@ def set_game_new_values(file_path):
 
 	with open(new_exec, "r+b") as f:
 		set_value(f, 0x2268f8, 0x1C) # Total of characters per line
+		set_value(f, 0x226908, 0x23) # Total of characters per line, intro
+		set_value(f, 0x22690c, 0x03) # Total lines in intro
 		set_value(f, 0x226940, 0x0F) # Text Spacing in game
-		set_value(f, 0x226948, 0x1C) # Text Spacing in introduction
+		set_value(f, 0x226948, 0x0F) # Text Spacing in introduction
 
 		# Set new flags
+		'''
 		set_value(f, 0x4C43C, 0xA6) # K
 		set_value(f, 0x4C460, 0xAB) # S
 		set_value(f, 0x4C46C, 0xA3) # F
@@ -29,13 +32,14 @@ def set_game_new_values(file_path):
 		set_value(f, 0x4C4CC, 0xA4) # G
 		set_value(f, 0x4C4D8, 0xAA) # R
 		set_value(f, 0x4C4E4, 0xA9) # Q
+		'''
 
 		f.flush()
 
 
 if __name__ == "__main__":
 	if len(sys.argv) != 2:
-		print("Usage: python setNewvaalues.py file")
+		print("Usage: python setNewvalues.py file")
 		sys.exit(1)
 	
 	file_path = sys.argv[1] #Path to SLPS_255.47 to modify
