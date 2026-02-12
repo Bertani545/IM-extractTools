@@ -17,7 +17,7 @@ def set_game_new_values(file_path):
 		set_value(f, 0x22690c, 0x03) # Total lines in intro (doesn't work)
 		set_value(f, 0x226940, 0x0F) # Text Spacing in game
 		set_value(f, 0x226948, 0x0F) # Text Spacing in introduction
-
+		set_value(f, 0x226d88, 0x0F) # Set spacing for options
 		# Set new flags
 		'''
 		set_value(f, 0x4C43C, 0xA6) # K
