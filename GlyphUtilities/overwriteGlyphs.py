@@ -49,11 +49,11 @@ for filename in os.listdir(NEW_GLYPHS_FOLDER):
 	image_path = os.path.join(NEW_GLYPHS_FOLDER, filename)
 	image_bytes = read_image_as_bytes(image_path)
 
-	start = START_OFFSET_1 + (idx - 1) * GLYPH_SIZE
+	start = START_OFFSET_1 + idx * GLYPH_SIZE
 	end = start + HEIGHT * WIDTH
 	data[start:end] = image_bytes
 
-	start = START_OFFSET_2 + (idx - 1) * GLYPH_SIZE
+	start = START_OFFSET_2 + idx * GLYPH_SIZE
 	end = start + HEIGHT * WIDTH
 	data[start:end] = image_bytes
 
