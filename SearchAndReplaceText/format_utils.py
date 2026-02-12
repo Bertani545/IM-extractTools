@@ -17,10 +17,22 @@ letters_map = {
 # Map of characters for the new version that you are creating
 output_letters = {
 	# Neccesary ones
-	'C': b'\xA6\x04\x09',
-	'I': b'\xA6\x04\x0f',
-	'W': b'\xA6\x04\x1d',
+	'B': b'\x4B\x04\x08',
+	'C': b'\x4B\x04\x09',
+	'D': b'\x4B\x04\x0a',
+	'F': b'\x4B\x04\x0c',
+	'G': b'\x4B\x04\x0d',
+	'I': b'\x4B\x04\x0f',
+	'J': b'\x4B\x04\x10',
+	'K': b'\x4B\x04\x11',
+	'O': b'\x4B\x04\x15',
+	'P': b'\x4B\x04\x16',
+	'Q': b'\x4B\x04\x17',
+	'R': b'\x4B\x04\x18',
+	'T': b'\x4B\x04\x1a',
+	'W': b'\x4B\x04\x1d',
 
+	# Added by modifying the font
 	'ñ': b'#', # Modified in the font # -> ñ
 
 	# Safety
