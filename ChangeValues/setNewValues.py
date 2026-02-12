@@ -13,8 +13,8 @@ def set_game_new_values(file_path):
 
 	with open(new_exec, "r+b") as f:
 		set_value(f, 0x2268f8, 0x1C) # Total of characters per line
-		set_value(f, 0x226908, 0x23) # Total of characters per line, intro
-		set_value(f, 0x22690c, 0x03) # Total lines in intro
+		set_value(f, 0x226908, 0x23) # Total of characters per line, intro (doesn't work)
+		set_value(f, 0x22690c, 0x03) # Total lines in intro (doesn't work)
 		set_value(f, 0x226940, 0x0F) # Text Spacing in game
 		set_value(f, 0x226948, 0x0F) # Text Spacing in introduction
 
