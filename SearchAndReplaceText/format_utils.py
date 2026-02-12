@@ -33,21 +33,22 @@ output_letters = {
 	'W': b'\x4B\x04\x1d',
 
 	# Added by modifying the font
-	'ñ': b'#', # Modified in the font # -> ñ
-
-	# Safety
-	'á': b'a', 
-	'é': b'e',
-	'í': b'i',
-	'ó': b'o',
-	'ú': b'u',
-	'Á': b'A',
-	'É': b'E',
-	'Í': b'I',
-	'Ó': b'O',
-	'Ú': b'U',
-	'¿': b'',
-	'¡': b''
+	'ñ': b'\x82\x9f',
+	'Ñ': b'\x82\xa0',
+	'á': b'\x82\xa1', 
+	'é': b'\x82\xa2',
+	'í': b'\x82\xa3',
+	'ó': b'\x82\xa4',
+	'ú': b'\x82\xa5',
+	'ü': b'\x82\xa6',
+	'Á': b'\x82\xa7',
+	'É': b'\x82\xa8',
+	'Í': b'\x82\xa9',
+	'Ó': b'\x82\xaA',
+	'Ú': b'\x82\xaB',
+	'Ü': b'\x82\xaC',
+	'¿': b'\x82\xaD',
+	'¡': b'\x82\xaE',
 }
 
 def prepareTextForSearch(text, start, end):
