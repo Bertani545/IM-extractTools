@@ -3,9 +3,7 @@ import re
 # Change the initial data for your game
 
 encoding = "shift_jis"
-LINE_SIZE = 28
-INITIAL_CHAR = ']'
-END_CHAR = '\0'
+
 
 # Map of characters that the game uses
 letters_map = {
@@ -95,9 +93,9 @@ def formatText(text):
 	while i < length:
 		ch = text[i]
 		if i+4 <= length and text[i:i+2] == "0x": #hex flag
-			flag = text[i:i+4]
+			flag = text[i:i+3]
 			try:
-				hex_val = int(flag, 16)
+				hex_val = ord(text[2]) # Changed this now that flags are letters
 			except:
 				hex_val = 0
 			out.append(hex_val)
@@ -110,7 +108,7 @@ def formatText(text):
 			
 		i += 1
 
-	return bytes(out)
+	return bytes(out) + b'\x00'
 
 def getCharSize(ch):
     """Return byte length based on custom letters map or encoding."""
@@ -125,21 +123,21 @@ def getTextSize(text):
 	formated = formatText(text)
 	return(len(formated))
 
-def checkLines(text):
+def checkLines(text, line_size):
 	lines = text.split('\n')
 	for i, line in enumerate(lines):
 		clean = re.sub(r"0x.", "", line)
-		if len(clean) > LINE_SIZE:
+		if len(clean) > line_size:
 			return i
 	return -1
 
-def complyLineSize(text):
-	mod_line = checkLines(text)
+def complyLineSize(text, line_size=28):
+	mod_line = checkLines(text, line_size)
 	while(mod_line != -1):
 		lines = text.split('\n')
 		to_mod = lines[mod_line]
-		lines[mod_line] = to_mod[:LINE_SIZE] + '\n' + to_mod[LINE_SIZE:]
+		lines[mod_line] = to_mod[:line_size] + '\n' + to_mod[line_size:]
 		text = "\n".join(lines)
-		mod_line = checkLines(text)
+		mod_line = checkLines(text, line_size)
 	return text
 
