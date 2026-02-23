@@ -9,7 +9,7 @@ import data as dialoge_info
 
 
 CURRENT_SEARCH = ""
-SEACRH_OFFSET = 0
+SEACRH_OFFSET = [0]
 INITIAL_CHAR = ']'
 END_CHAR = '\0'
 LINE_SIZE = dialoge_info.normal_dialogues['line_size']
@@ -152,7 +152,7 @@ def finishTranslationSetup(binary_data, text_map, tkinterStuff, text_data, offse
 	n_bytes = len(byte_data) - 1 # The \0 char
 	decoded_text = FU.decodeGameText(byte_data)
 
-	text_data.original = decoded_text
+	text_data.og_dialogue = decoded_text[:-1]
 
 	textToMod.insert("1.0", decoded_text)
 	textToMod.grid()
@@ -219,24 +219,27 @@ def startNewTranslationText(binary_data, text_map, tkinterStuff, text_data, star
 	inputText = tkinterStuff['inputText']
 	text = inputText.get("1.0", "end-1c") #Removes last \n
 
+	'''
 	if text != CURRENT_SEARCH:
 		SEACRH_OFFSET = 0
 		CURRENT_SEARCH = ""
+	'''
+
 
 	if text == "":
 		return 
 	encoded = FU.prepareTextForSearch(text, start_sym, end_sym)
 
-	pos = binary_data.find(encoded, SEACRH_OFFSET)
+	pos = binary_data.find(encoded, SEACRH_OFFSET[0])
 
 	if pos >= 0:
-		SEACRH_OFFSET = pos + 1
+		SEACRH_OFFSET[0] = pos + 1
 		CURRENT_SEARCH = text
 
 		if start_sym != '':
 			pos += 1 # We don't care about this one
 		if end_sym != '':
-			pos = binary_data.rfind(bytes([INITIAL_CHAR]), 0, pos) + 1
+			pos = binary_data.rfind(INITIAL_CHAR.encode("shift_jis") , 0, pos) + 1
 
 		# Find metadata pos
 		pos = binary_data.rfind(b'[face:', 0, pos)
@@ -245,7 +248,9 @@ def startNewTranslationText(binary_data, text_map, tkinterStuff, text_data, star
 	else:
 		tk.messagebox.showinfo("Info", 'Restarting')
 		res = closeGUI(tkinterStuff, text_data)
-		SEACRH_OFFSET = 0
+
+		# Do not do this
+		#SEACRH_OFFSET = 0
 
 	tkinterStuff['offset'].configure(text = res)
 	tkinterStuff['allText'].config(state="disabled")
@@ -274,7 +279,7 @@ def create_layout(root, binary_data, text_data):
 	offsetlbl.grid(column=0, row=3)
 
 	# ----
-	textToMod = tk.Text(frame, width=50, height=20, font=("Arial", 12))
+	textToMod = tk.Text(frame, width=40, height=20, font=("Arial", 13))
 	textToMod.grid(column=0, row=4)
 	textToMod.config(state="disabled")
 
@@ -294,7 +299,7 @@ def create_layout(root, binary_data, text_data):
 			label = tk.Label(frame, text = "I'm a default text")
 		label.grid(column=currCol, row=3)
 		
-		nT = tk.Text(frame, width=50, height=20, font=("Arial", 12))
+		nT = tk.Text(frame, width=40, height=20, font=("Arial", 13))
 		nT.config(state="normal")
 		nT.grid(column=currCol, row=4)
 		newText[lang] = nT
@@ -345,3 +350,7 @@ def create_layout(root, binary_data, text_data):
 	
 	return frame, data
 		
+
+def set_search_offset(off):
+	global SEACRH_OFFSET
+	SEACRH_OFFSET = off

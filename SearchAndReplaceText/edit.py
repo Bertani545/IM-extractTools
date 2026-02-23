@@ -7,10 +7,16 @@ import json
 import format_utils as FU
 import Layouts as layouts
 
+
+SEACRH_OFFSET = [0]
+def restartOffset():
+	global SEACRH_OFFSET
+	SEACRH_OFFSET[0] = 0
+
 text_types = ["Regular", "Black", "Options", "Item description", "Letter", "Phone call"]
 display_functions = [
-	layouts.normal_dialogue.create_layout,
-	layouts.black_dialogue.create_layout
+	layouts.normal_dialogue,
+	layouts.black_dialogue
 ]
 
 ADD_TRANSLATION = False
@@ -19,7 +25,11 @@ def saveJSON(json_path, textData):
 		ADD_TRANSLATION(textData)
 	json_data = {}
 	json_data["languages"] = layouts.info.languages
-	json_data["data"] = textData
+
+	# Sort texrData
+	sortedData = {k: textData[k] for k in sorted(textData, key=int)}
+	
+	json_data["data"] = sortedData
 	with open(json_path, "w") as file:
 		#print(json_data)
 		file.seek(0)
@@ -36,7 +46,9 @@ def copy_to_clipboard(text):
 def create_display(Id, root, binary_data, text_data):
 	if Id == -1:
 		return False
-	return display_functions[Id](root, binary_data, text_data)
+	global SEACRH_OFFSET
+	display_functions[Id].set_search_offset(SEACRH_OFFSET)
+	return display_functions[Id].create_layout(root, binary_data, text_data)
 
 CURRENT_DISPLAY = False
 def textType_changed(event, root, binary_data, text_data ):
@@ -78,14 +90,21 @@ if __name__ == '__main__':
 	root.geometry('1800x800')
 	tk.Button(root, font=("Arial", 12, "bold"), text="Copy …", command=lambda: copy_to_clipboard("…")).grid(column=1, row=0)
 		
+
 		
 	dropdown = ttk.Combobox(root, values=text_types, state="readonly")
 	dropdown.grid(column=0, row=0)
 	dropdown.bind("<<ComboboxSelected>>", lambda event:textType_changed(event, root, binaryData, textData))
 
-	saveButton = tk.Button(root, text = "Save to JSON" ,
+	options_frame = tk.Frame(root)
+	saveButton = tk.Button(options_frame, text = "Save to JSON" ,
 							fg = "red", command=lambda:saveJSON(json_path, textData))
-	saveButton.grid(column=0, row=2)
+	saveButton.pack(side=tk.RIGHT, padx=5)
+	restartButton = tk.Button(options_frame, text = "Re-start offset" ,
+							fg = "red", command=restartOffset)
+	restartButton.pack(side=tk.LEFT, padx=5)
+
+	options_frame.grid(column=0, row=2)
 
 	# Let's add the flags
 	tk.Label(root, justify="left", text = "Flags we may encounter:\nB->0xA1    C->C          D->0xA2\nF->0xA3    G->0xA4    I->I    \nJ->0xA5     K->0xA6    O->0xA7\nP->0xA8    Q->0xA9    R->0xAA\nS->0xAB    T->0xAC    W->W").grid(column=1, row=2)
