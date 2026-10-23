@@ -1,3 +1,6 @@
 [submodule "Disordered-Image-Extractor"]
 	path = Disordered-Image-Extractor
 	url = https://github.com/Bertani545/Disordered-Image-Extractor
+[submodule "IM-get-scenes-dialogues-tress"]
+	path = IM-get-scenes-dialogues-tress
+	url = https://github.com/Bertani545/IM-get-scenes-dialogues-tress.git
