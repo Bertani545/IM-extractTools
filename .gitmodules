@@ -4,3 +4,6 @@
 [submodule "IM-get-scenes-dialogues-tress"]
 	path = IM-get-scenes-dialogues-tress
 	url = https://github.com/Bertani545/IM-get-scenes-dialogues-tress.git
+[submodule "IM-Translation-Webpage"]
+	path = IM-Translation-Webpage
+	url = https://github.com/Bertani545/IM-Translation-Webpage.git
